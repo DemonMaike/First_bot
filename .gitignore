@@ -1,0 +1,6 @@
+id users.txt
+venv
+.idea
+FGMG.db
+secret.py
+__pycache__
