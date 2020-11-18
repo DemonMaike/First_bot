@@ -13,11 +13,14 @@ def read_task(idu):
     role = [x for x in cur.execute('SELECT Role FROM Users WHERE Id_Users = {}'.format(idu))][0][0]
 
     # Выводим все задачи - кажется жестко(например есди задач 100)
+    # 100 задач не будет, задачи будут закрываться, а здесь выводим актуальные, завершенные задачи смотряться в
+    # отдельном блоке, и там будет лимит на 10-20 последних заверешнных задач, так что тут все ок.
     if role == 'Руководитель':
         result = [x for x in cur.execute('SELECT * FROM Task')]
         text = '22'
         # Чуть чуть переделал
         # Пока не меняет id пользователей
+        # Что за text?
         response_data = []
         for i in result:
             temp = []
@@ -34,9 +37,10 @@ def read_task(idu):
 
             response_data.append(' '.join(temp))
         # поставил пробел , чтобы tg думал что строка непустая
+        # Не очень понял, это ты для себя сделал чтобы видеть пустые сообщения от тг если нет строчки ?
         text = ' \n'.join(response_data)
 
-
+    # Нужно выодить задачи для пользователей по их id на самом деле
     elif role == 'Ведущий':
         result = [x for x in cur.execute('SELECT * FROM Task t JOIN Users u ON t. ')]
         print(result)

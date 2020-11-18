@@ -81,7 +81,6 @@ def button_read(message):
         mci = message.chat.id
         msg = bot.send_message(mci, f'Вот список текущих задач:\n {DB.read_task(mci)}')
         bot.register_next_step_handler(msg, button_read)
-
     elif mt == 'Переназначение задач':
         msg = bot.send_message(mci, 'Выберете, на кого переназначить:')
         bot.register_next_step_handler(msg, reget_task)
@@ -96,7 +95,7 @@ def write_task(message):
     text = message.text
     DB.write_task(text)
     msg = bot.send_message(mci, 'Введите комментарий:')
-    bot.register_next_step_handler(msg, write_comment_сup())
+    bot.register_next_step_handler(msg, write_comment_сup)
 
 
 # Запись комента, записывает коментарий и выводит список пользователей(руководителю - ведущие, ведущим - инженеры ),
@@ -115,7 +114,7 @@ def write_user_for_task(message):
     text = message.text
     DB.write_worker_task(text)
     msg = bot.send_message(mci, 'Исполнитель выбран! Чтобы продолжить, нажмите на кнопку:', reply_markup=button_next)
-    bot.register_next_step_handler(msg, button_read)
+    bot.register_next_step_handler(msg, user_filter)
 
 
 # Функция выводит список текущих задач, НЕ УЧИТЫВАЕТ РОЛЬ ПОЛЬЗОВАТЕЛЯ!!!!!                                      !!!
