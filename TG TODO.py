@@ -117,7 +117,7 @@ def write_user_for_task(message):
     bot.register_next_step_handler(msg, user_filter)
 
 
-# Функция выводит список текущих задач, НЕ УЧИТЫВАЕТ РОЛЬ ПОЛЬЗОВАТЕЛЯ!!!!!                                      !!!
+# Функция выводит список текущих задач, учитывает роль пользователя, но не выводит комент!!!!!                    !!!
 def now_task(message):
     id_user = message.from_user.id
     mci = message.chat.id

@@ -1,6 +1,8 @@
 import sqlite3
 import secret
 
+
+
 # Показывает текущие задачи, надо сделать разветвление по user_id, чтобы в зависимости от id каждый видел свои задачи,
 # наверное проще решить это посредством корректировки структуры самой БД.
 def read_task(idu):
@@ -16,7 +18,10 @@ def read_task(idu):
     # 100 задач не будет, задачи будут закрываться, а здесь выводим актуальные, завершенные задачи смотряться в
     # отдельном блоке, и там будет лимит на 10-20 последних заверешнных задач, так что тут все ок.
     if role == 'Руководитель':
-        result = [x for x in cur.execute('SELECT * FROM Task')]
+        # Теперь таблица таск склеивается с коментами по номеру комента, но так как выводим все,
+        # то номер комента дублируется(
+        result = [x for x in cur.execute('SELECT * FROM Task t JOIN Comments c WHERE t.No_Comments = c.No_Comments')]
+        print(result)
         text = '22'
         # Чуть чуть переделал
         # Пока не меняет id пользователей
@@ -27,33 +32,46 @@ def read_task(idu):
             temp.append('Номер задачи: {}\n'.format(i[0]))
             temp.append('Назавание задачи: {}\n'.format(i[1]))
             temp.append('Выполнение: {}\n'.format(i[2]))
-            result = [x for x in cur.execute('SELECT User_Name FROM Users WHERE Id_Users = {}'.format(i[3]))]
-            if result:
-                name = result[0][0]
+            idd = [x for x in cur.execute("""SELECT id_worker FROM Task WHERE No_task = {}""".format(i[0]))][0][0]
+            resulti = [x for x in cur.execute("""SELECT User_Name FROM Users WHERE Id_Users = {}""".format(idd))]
+            if resulti:
+                name = resulti[0][0]
             else:
+                #Не имеет смысла вроде здесь такая схема,можно просто выбрать индекс ресулти как очкарика,
+                # проверял ошибки?
                 name = "конь в пальто"
             temp.append('Исполнитель: {}\n'.format(name))
-            temp.append('Коментарии:{}\n'.format(i[4]))
+            temp.append('Коментарии:{}\n'.format(i[6]))
 
             response_data.append(' '.join(temp))
         # поставил пробел , чтобы tg думал что строка непустая
         # Не очень понял, это ты для себя сделал чтобы видеть пустые сообщения от тг если нет строчки ?
         text = ' \n'.join(response_data)
-
     # Нужно выодить задачи для пользователей по их id на самом деле
     elif role == 'Ведущий':
-        result = [x for x in cur.execute('SELECT * FROM Task t JOIN Users u ON t. ')]
-        print(result)
-        string = 0
+        result = [x for x in cur.execute('SELECT * FROM Task t JOIN Comments c '
+                                         'WHERE t.No_Comments = c.No_Comments AND id_worker = {} '.format(idu))]
         text = ''
-        for i in range(len(result)):
-            result_print = 'Номер задачи: {}\nНазавание задачи: {}\nВыполнение: {}\n Исполнитель: {}\n Коментарии:{}\n'. \
-                format(result[string][0], result[string][1], result[string][2], result[string][3], result[string][4])
-            text = text + result_print
-            string += 1
+        response_data = []
+        for i in result:
+            temp = []
+            temp.append('Номер задачи: {}\n'.format(i[0]))
+            temp.append('Назавание задачи: {}\n'.format(i[1]))
+            temp.append('Выполнение: {}\n'.format(i[2]))
+            idd = [x for x in cur.execute("""SELECT id_worker FROM Task WHERE No_task = {}""".format(i[0]))][0][0]
+            resulti = [x for x in cur.execute("""SELECT User_Name FROM Users WHERE Id_Users = {}""".format(idd))]
+            if resulti:
+                name = resulti[0][0]
+            else:
+                # Не имеет смысла вроде здесь такая схема, проверял ошибки?
+                name = "конь в пальто"
+            temp.append('Исполнитель: {}\n'.format(name))
+            temp.append('Коментарии:{}\n'.format(i[6]))
+
+            response_data.append(' '.join(temp))
 
     elif role == 'Инженер':
-        result = [x for x in cur.execute('SELECT * FROM Task')]
+        result = [x for x in cur.execute('SELECT * FROM Task WHERE Id_Users = {}'.format(idu))]
         string = 0
         text = ''
         for i in range(len(result)):
@@ -82,6 +100,14 @@ def write_comment(msg):
     cur = conn.cursor()
     db_data = [(msg,)]
     cur.executemany("""INSERT INTO Comments(Comment) VALUES(?) """, db_data)
+    set_no_comments = [x for x in cur.execute("""SELECT No_Comments FROM Comments""")]
+    end_index = len(set_no_comments) - 1
+    no_end_comments = set_no_comments[end_index][0]
+    all = [x for x in cur.execute("""SELECT * FROM Task""")]
+    index_end_task = len(all) - 1
+    end = [x for x in cur.execute("""SELECT No_task FROM Task""")]
+    end_no_task = end[index_end_task][0]
+    cur.execute("""UPDATE Task SET No_Comments = {} WHERE No_Task = {}""".format(no_end_comments, end_no_task))
     conn.commit()
 
 
@@ -110,7 +136,7 @@ def read_role(idu):
     return result[0][0]
 
 
-# Возвращает строку с фамилиями ведущих из ТГ.
+# Возвращает строку с фамилиями ведущих из БД.
 def list_users_mid():
     conn = sqlite3.connect('FGMG.db')
     cur = conn.cursor()
