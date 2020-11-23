@@ -34,7 +34,7 @@ def read_task(idu):
             idd = [x for x in cur.execute("""SELECT id_worker FROM Task WHERE No_task = {}""".format(i[0]))][0][0]
             name = [x for x in cur.execute("""SELECT User_Name FROM Users WHERE Id_Users = {}""".format(idd))][0][0]
             temp.append('Исполнитель: {}\n'.format(name))
-            temp.append('Коментарии:{}\n\n'.format(i[6]))
+            temp.append('Коментарии: {}\n\n'.format(i[6]))
 
             response_data.append(' '.join(temp))
         # поставил пробел , чтобы tg думал что строка непустая
@@ -54,7 +54,7 @@ def read_task(idu):
             idd = [x for x in cur.execute("""SELECT id_worker FROM Task WHERE No_task = {}""".format(i[0]))][0][0]
             name = [x for x in cur.execute("""SELECT User_Name FROM Users WHERE Id_Users = {}""".format(idd))][0][0]
             temp.append('Исполнитель: {}\n'.format(name))
-            temp.append('Коментарии:{}\n\n'.format(i[6]))
+            temp.append('Коментарии: {}\n\n'.format(i[6]))
 
             response_data.append(' '.join(temp))
             text = ' \n'.join(response_data)
@@ -71,7 +71,7 @@ def read_task(idu):
             idd = [x for x in cur.execute("""SELECT id_worker FROM Task WHERE No_task = {}""".format(i[0]))][0][0]
             name = [x for x in cur.execute("""SELECT User_Name FROM Users WHERE Id_Users = {}""".format(idd))][0][0]
             temp.append('Исполнитель: {}\n'.format(name))
-            temp.append('Коментарии:{}\n\n'.format(i[6]))
+            temp.append('Коментарии: {}\n\n'.format(i[6]))
 
             response_data.append(' '.join(temp))
             text = ' \n'.join(response_data)
@@ -228,7 +228,7 @@ def read_complete_task(idu):
             idd = [x for x in cur.execute("""SELECT id_worker FROM Task WHERE No_task = {}""".format(i[0]))][0][0]
             name = [x for x in cur.execute("""SELECT User_Name FROM Users WHERE Id_Users = {}""".format(idd))][0][0]
             temp.append('Исполнитель: {}\n'.format(name))
-            temp.append('Коментарии:{}\n\n'.format(i[6]))
+            temp.append('Коментарии: {}\n\n'.format(i[6]))
 
             response_data.append(' '.join(temp))
         text = ' \n'.join(response_data)
@@ -245,7 +245,7 @@ def read_complete_task(idu):
             idd = [x for x in cur.execute("""SELECT id_worker FROM Task WHERE No_task = {}""".format(i[0]))][0][0]
             name = [x for x in cur.execute("""SELECT User_Name FROM Users WHERE Id_Users = {}""".format(idd))][0][0]
             temp.append('Исполнитель: {}\n'.format(name))
-            temp.append('Коментарии:{}\n\n'.format(i[6]))
+            temp.append('Коментарии: {}\n\n'.format(i[6]))
             response_data.append(' '.join(temp))
             text = ' \n'.join(response_data)
     elif role == 'Инженер':
@@ -261,7 +261,7 @@ def read_complete_task(idu):
             idd = [x for x in cur.execute("""SELECT id_worker FROM Task WHERE No_task = {}""".format(i[0]))][0][0]
             name = [x for x in cur.execute("""SELECT User_Name FROM Users WHERE Id_Users = {}""".format(idd))][0][0]
             temp.append('Исполнитель: {}\n'.format(name))
-            temp.append('Коментарии:{}\n\n'.format(i[6]))
+            temp.append('Коментарии: {}\n\n'.format(i[6]))
 
             response_data.append(' '.join(temp))
             text = ' \n'.join(response_data)
