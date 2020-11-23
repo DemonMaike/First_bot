@@ -18,11 +18,10 @@ def read_task(idu):
     # 100 задач не будет, задачи будут закрываться, а здесь выводим актуальные, завершенные задачи смотряться в
     # отдельном блоке, и там будет лимит на 10-20 последних заверешнных задач, так что тут все ок.
     if role == 'Руководитель':
-        # Теперь таблица таск склеивается с коментами по номеру комента, но так как выводим все,
-        # то номер комента дублируется(
-        result = [x for x in cur.execute('SELECT * FROM Task t JOIN Comments c WHERE t.No_Comments = c.No_Comments')]
+        # Теперь таблица таск склеивается с коментами по номеру комента
+        result = [x for x in cur.execute('SELECT * FROM Task t JOIN Comments c ON t.No_Comments = c.No_Comments')]
         print(result)
-        text = '22'
+        text = ''
         # Чуть чуть переделал
         # Пока не меняет id пользователей
         # Что за text?
@@ -33,15 +32,9 @@ def read_task(idu):
             temp.append('Назавание задачи: {}\n'.format(i[1]))
             temp.append('Выполнение: {}\n'.format(i[2]))
             idd = [x for x in cur.execute("""SELECT id_worker FROM Task WHERE No_task = {}""".format(i[0]))][0][0]
-            resulti = [x for x in cur.execute("""SELECT User_Name FROM Users WHERE Id_Users = {}""".format(idd))]
-            if resulti:
-                name = resulti[0][0]
-            else:
-                #Не имеет смысла вроде здесь такая схема,можно просто выбрать индекс ресулти как очкарика,
-                # проверял ошибки?
-                name = "конь в пальто"
+            name = [x for x in cur.execute("""SELECT User_Name FROM Users WHERE Id_Users = {}""".format(idd))][0][0]
             temp.append('Исполнитель: {}\n'.format(name))
-            temp.append('Коментарии:{}\n'.format(i[6]))
+            temp.append('Коментарии:{}\n\n'.format(i[6]))
 
             response_data.append(' '.join(temp))
         # поставил пробел , чтобы tg думал что строка непустая
@@ -59,44 +52,50 @@ def read_task(idu):
             temp.append('Назавание задачи: {}\n'.format(i[1]))
             temp.append('Выполнение: {}\n'.format(i[2]))
             idd = [x for x in cur.execute("""SELECT id_worker FROM Task WHERE No_task = {}""".format(i[0]))][0][0]
-            resulti = [x for x in cur.execute("""SELECT User_Name FROM Users WHERE Id_Users = {}""".format(idd))]
-            if resulti:
-                name = resulti[0][0]
-            else:
-                # Не имеет смысла вроде здесь такая схема, проверял ошибки?
-                name = "конь в пальто"
+            name = [x for x in cur.execute("""SELECT User_Name FROM Users WHERE Id_Users = {}""".format(idd))][0][0]
             temp.append('Исполнитель: {}\n'.format(name))
-            temp.append('Коментарии:{}\n'.format(i[6]))
+            temp.append('Коментарии:{}\n\n'.format(i[6]))
 
             response_data.append(' '.join(temp))
-
+            text = ' \n'.join(response_data)
     elif role == 'Инженер':
-        result = [x for x in cur.execute('SELECT * FROM Task WHERE Id_Users = {}'.format(idu))]
-        string = 0
+        result = [x for x in cur.execute('SELECT * FROM Task t JOIN Comments c ON t.No_Comments = c.No_Comments '
+                                         'WHERE id_worker = {} '.format(idu))]
         text = ''
-        for i in range(len(result)):
-            result_print = 'Номер задачи: {}\nНазавание задачи: {}\nВыполнение: {}\n Исполнитель: {}\n Коментарии:{}\n'. \
-                format(result[string][0], result[string][1], result[string][2], result[string][3], result[string][4])
-            text = text + result_print
-            string += 1
+        response_data = []
+        for i in result:
+            temp = []
+            temp.append('Номер задачи: {}\n'.format(i[0]))
+            temp.append('Назавание задачи: {}\n'.format(i[1]))
+            temp.append('Выполнение: {}\n'.format(i[2]))
+            idd = [x for x in cur.execute("""SELECT id_worker FROM Task WHERE No_task = {}""".format(i[0]))][0][0]
+            name = [x for x in cur.execute("""SELECT User_Name FROM Users WHERE Id_Users = {}""".format(idd))][0][0]
+            temp.append('Исполнитель: {}\n'.format(name))
+            temp.append('Коментарии:{}\n\n'.format(i[6]))
+
+            response_data.append(' '.join(temp))
+            text = ' \n'.join(response_data)
     else:
         text = 'Роль не определена'
 
     return text
 
 
-# Запись задачи.
+# Запись задачи, при создании задачи ставим Comlpete = 'Не выполнено'
 def write_task(msg):
-    conn = sqlite3.connect('FGMG.db')
+    conn = sqlite3.connect(secret.DB)
     cur = conn.cursor()
     db_data = [(msg,)]
     result = cur.executemany("""INSERT INTO Task(Task_Name) VALUES(?)""", db_data)
+    last_task_no = [x for x in cur.execute("""SELECT No_task FROM Task WHERE Task_Name = '{}' """.format(msg))]
+    print(last_task_no)
+    cur.execute("""UPDATE Task SET Complete = 'Не выполнено' WHERE No_task = {}""".format(last_task_no[0][0]))
     conn.commit()
 
 
 # Запись комента
 def write_comment(msg):
-    conn = sqlite3.connect('FGMG.db')
+    conn = sqlite3.connect(secret.DB)
     cur = conn.cursor()
     db_data = [(msg,)]
     cur.executemany("""INSERT INTO Comments(Comment) VALUES(?) """, db_data)
@@ -113,7 +112,7 @@ def write_comment(msg):
 
 # Возвращает Фамилию юзера по id
 def id_filter(idu):
-    conn = sqlite3.connect('FGMG.db')
+    conn = sqlite3.connect(secret.DB)
     cur = conn.cursor()
     result = [x for x in cur.execute("SELECT User_Name FROM Users WHERE Id_Users = {} ".format(idu))]
     return result
@@ -121,7 +120,7 @@ def id_filter(idu):
 
 # Записывает юзера, Фамлию, Роль, id
 def write_user(user):
-    conn = sqlite3.connect('FGMG.db')
+    conn = sqlite3.connect(secret.DB)
     cur = conn.cursor()
     cur.executemany("""INSERT INTO Users(User_Name, Role, Id_Users) VALUES(?, ?, ?) """, user)
     conn.commit()
@@ -129,7 +128,7 @@ def write_user(user):
 
 # Читает роль по id.
 def read_role(idu):
-    conn = sqlite3.connect('FGMG.db')
+    conn = sqlite3.connect(secret.DB)
     cur = conn.cursor()
     result = [x for x in cur.execute("""SELECT Role FROM Users WHERE Id_Users = {} """.format(idu))]
     conn.commit()
@@ -138,7 +137,7 @@ def read_role(idu):
 
 # Возвращает строку с фамилиями ведущих из БД.
 def list_users_mid():
-    conn = sqlite3.connect('FGMG.db')
+    conn = sqlite3.connect(secret.DB)
     cur = conn.cursor()
     result = [x for x in cur.execute("""SELECT User_Name FROM Users WHERE Role = 'Ведущий' """)]
     string = 0
@@ -152,7 +151,7 @@ def list_users_mid():
 
 # Возвращает строку с фамилиями инженеров.
 def list_users_top():
-    conn = sqlite3.connect('FGMG.db')
+    conn = sqlite3.connect(secret.DB)
     cur = conn.cursor()
     result = [x for x in cur.execute("""SELECT User_Name FROM Users WHERE Role = 'Инженер' """)]
     string = 0
@@ -166,7 +165,7 @@ def list_users_top():
 
 # Принимает имя исполнителя, записывает в последнюю задачу.
 def write_worker_task(user_name):
-    conn = sqlite3.connect('FGMG.db')
+    conn = sqlite3.connect(secret.DB)
     cur = conn.cursor()
     all = [x for x in cur.execute("""SELECT * FROM Task""")]
     index_end_task = len(all) - 1
@@ -177,4 +176,122 @@ def write_worker_task(user_name):
     result = cur.execute("""UPDATE Task SET id_worker = '{}'  WHERE No_task = {}  """.format(id_worker, end_no_task))
     conn.commit()
 
+# Первый номер задачи имеет лишний пробел, надо разобраться и поправить
+def read_no_task(idu):
+    conn = sqlite3.connect(secret.DB)
+    cur = conn.cursor()
+    no_task_user = [x for x in cur.execute("""SELECT No_Task FROM Task WHERE id_worker = {}""".format(idu))]
+    data = []
+    for i in no_task_user:
+        temp = []
+        temp.append('{}'.format(i[0]))
+        data.append("".join(temp))
+    text = '\n'.join(data)
+    return text
 
+def read_full_no_task():
+    conn = sqlite3.connect(secret.DB)
+    cur = conn.cursor()
+    no_task_user = [x for x in cur.execute("""SELECT No_Task FROM Task""")]
+    data = []
+    for i in no_task_user:
+        temp = []
+        temp.append('{}'.format(i[0]))
+        data.append("".join(temp))
+    text = '\n'.join(data)
+    return text
+
+
+def comple_task(msg):
+    conn = sqlite3.connect(secret.DB)
+    cur = conn.cursor()
+    print(msg)
+    cur.execute("""UPDATE Task SET Complete = 'Выполнено' WHERE No_task = {}""".format(msg))
+    conn.commit()
+
+def read_complete_task(idu):
+    conn = sqlite3.connect(secret.DB)
+    cur = conn.cursor()
+
+    role = [x for x in cur.execute('SELECT Role FROM Users WHERE Id_Users = {}'.format(idu))][0][0]
+
+    if role == 'Руководитель':
+        result = [x for x in cur.execute("SELECT * FROM Task t JOIN Comments c ON t.No_Comments = c.No_Comments"
+                                         " WHERE Complete = 'Выполнено'")]
+        print(result)
+        response_data = []
+        for i in result:
+            temp = []
+            temp.append('Номер задачи: {}\n'.format(i[0]))
+            temp.append('Назавание задачи: {}\n'.format(i[1]))
+            temp.append('Выполнение: {}\n'.format(i[2]))
+            idd = [x for x in cur.execute("""SELECT id_worker FROM Task WHERE No_task = {}""".format(i[0]))][0][0]
+            name = [x for x in cur.execute("""SELECT User_Name FROM Users WHERE Id_Users = {}""".format(idd))][0][0]
+            temp.append('Исполнитель: {}\n'.format(name))
+            temp.append('Коментарии:{}\n\n'.format(i[6]))
+
+            response_data.append(' '.join(temp))
+        text = ' \n'.join(response_data)
+    elif role == 'Ведущий':
+        result = [x for x in cur.execute('SELECT * FROM Task t JOIN Comments c ON t.No_Comments = c.No_Comments '
+                                         'WHERE id_worker = {} AND Complete = "Выполнено" '.format(idu))]
+        text = ''
+        response_data = []
+        for i in result:
+            temp = []
+            temp.append('Номер задачи: {}\n'.format(i[0]))
+            temp.append('Назавание задачи: {}\n'.format(i[1]))
+            temp.append('Выполнение: {}\n'.format(i[2]))
+            idd = [x for x in cur.execute("""SELECT id_worker FROM Task WHERE No_task = {}""".format(i[0]))][0][0]
+            name = [x for x in cur.execute("""SELECT User_Name FROM Users WHERE Id_Users = {}""".format(idd))][0][0]
+            temp.append('Исполнитель: {}\n'.format(name))
+            temp.append('Коментарии:{}\n\n'.format(i[6]))
+            response_data.append(' '.join(temp))
+            text = ' \n'.join(response_data)
+    elif role == 'Инженер':
+        result = [x for x in cur.execute('SELECT * FROM Task t JOIN Comments c ON t.No_Comments = c.No_Comments '
+                                         'WHERE id_worker = {} AND Complete = "Выполнено" '.format(idu))]
+        text = ''
+        response_data = []
+        for i in result:
+            temp = []
+            temp.append('Номер задачи: {}\n'.format(i[0]))
+            temp.append('Назавание задачи: {}\n'.format(i[1]))
+            temp.append('Выполнение: {}\n'.format(i[2]))
+            idd = [x for x in cur.execute("""SELECT id_worker FROM Task WHERE No_task = {}""".format(i[0]))][0][0]
+            name = [x for x in cur.execute("""SELECT User_Name FROM Users WHERE Id_Users = {}""".format(idd))][0][0]
+            temp.append('Исполнитель: {}\n'.format(name))
+            temp.append('Коментарии:{}\n\n'.format(i[6]))
+
+            response_data.append(' '.join(temp))
+            text = ' \n'.join(response_data)
+    else:
+        text = 'Роль не определена'
+
+    return text
+
+def top_list():
+    conn = sqlite3.connect('FGMG.db')
+    cur = conn.cursor()
+    result = [x for x in cur.execute("""SELECT User_Name FROM Users WHERE Role = 'Инженер'""")]
+    response_data =[]
+    for i in result:
+        response_data.append('{}'.format(i[0]))
+    text = '\n'.join(response_data)
+    return text
+
+def reget_task(msg):
+    info = msg.split(', ')
+    print(info)
+    conn = sqlite3.connect('FGMG.db')
+    cur = conn.cursor()
+    id_reget_user = [x for x in cur.execute("""SELECT Id_Users FROM Users WHERE User_Name = '{}' """.format(info[1]))]
+    print(id_reget_user)
+    cur.execute("""UPDATE Task SET id_worker = {} WHERE No_task = {}  """.format(id_reget_user[0][0], info[0]))
+    conn.commit()
+
+def del_task(no_task):
+    conn = sqlite3.connect('FGMG.db')
+    cur = conn.cursor()
+    cur.execute("""DELETE FROM Task WHERE No_task = {} """.format(int(no_task)))
+    conn.commit()
