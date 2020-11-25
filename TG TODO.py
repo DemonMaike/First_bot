@@ -96,6 +96,14 @@ def button_read(message):
         msg = bot.send_message(mci, 'Напишите номер задачи, которую вы хотите удалить:'
                                     '\n {}'.format(DB.read_full_no_task()))
         bot.register_next_step_handler(msg, del_task)
+    elif mt == 'Cформировать Excel отчет':
+        bot.send_message(mci, 'EXCEL отчёт:')
+        DB.excel_commit(idu)
+
+
+    else:
+        msg = bot.send_message(mci, 'Вы выбрали не верный вариант, пожалуйста, нажмите на одну из кнопок.')
+        bot.register_next_step_handler(msg, button_read)
 
 # Функция создания задачи, есть только у РУКОВОДИТЕЛЯ, записывает название задачи и отправляет на комент.
 def write_task(message):
@@ -141,7 +149,7 @@ def now_task(message):
     bot.register_next_step_handler(msg, user_filter)
 
 
-# Перенаправление задачи для ведущих, ТЕСТ!!!!!                                                                      !!!
+# Перенаправление задачи для ВЕДУЩИХ
 def reget_task(message):
     mci = message.chat.id
     idu = message.from_user.id
@@ -150,7 +158,7 @@ def reget_task(message):
                                 f'\n "Фамилия адресанта"\n {DB.list_users_top()} ')
     bot.register_next_step_handler(msg, comlete_reget_task)
 
-# Выполняет переназначение задачи ТЕСТ!!!
+# Выполняет переназначение задачи.
 def comlete_reget_task(message):
     mci = message.chat.id
     mt = message.text

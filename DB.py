@@ -1,5 +1,6 @@
 import sqlite3
 import secret
+import pandas as pd
 
 
 
@@ -20,7 +21,6 @@ def read_task(idu):
     if role == 'Руководитель':
         # Теперь таблица таск склеивается с коментами по номеру комента
         result = [x for x in cur.execute('SELECT * FROM Task t JOIN Comments c ON t.No_Comments = c.No_Comments')]
-        print(result)
         text = ''
         # Чуть чуть переделал
         # Пока не меняет id пользователей
@@ -290,8 +290,54 @@ def reget_task(msg):
     cur.execute("""UPDATE Task SET id_worker = {} WHERE No_task = {}  """.format(id_reget_user[0][0], info[0]))
     conn.commit()
 
+# Удаляет задачу, но не удаляет коментарий!!!                                                                   !!!
 def del_task(no_task):
     conn = sqlite3.connect('FGMG.db')
     cur = conn.cursor()
-    cur.execute("""DELETE FROM Task WHERE No_task = {} """.format(int(no_task)))
+    no_com = [x for x in cur.execute("""SELECT No_Comments FROM Task WHERE No_task = {}""".format(int(no_task)))]
+    No_com_del = no_com[0][0]
+    print(No_com_del)
+    cur.execute("""DELETE FROM Task WHERE No_task = {}""".format(int(no_task)))
+    cur.execute("""DELETE FROM Comments WHERE No_Comments = {}""".format(No_com_del))
     conn.commit()
+
+def excel_commit(idu):
+    conn = sqlite3.connect(secret.DB)
+    cur = conn.cursor()
+    role = [x for x in cur.execute('SELECT Role FROM Users WHERE Id_Users = {}'.format(idu))][0][0]
+    if role == 'Руководитель':
+        result = [x for x in cur.execute('SELECT * FROM Task t JOIN Comments c ON t.No_Comments = c.No_Comments')]
+        response_data = []
+        for i in result:
+            temp = []
+            temp.append( '{}'.format(i[0])) #Номер задачи
+            temp.append('{}'.format(i[1]))#Назавание задачи
+            temp.append('{}'.format(i[2]))#Выполнение
+            idd = [x for x in cur.execute("""SELECT id_worker FROM Task WHERE No_task = {}""".format(i[0]))][0][0]
+            name = [x for x in cur.execute("""SELECT User_Name FROM Users WHERE Id_Users = {}""".format(idd))][0][0]
+            temp.append('{}'.format(name))#Исполнитель
+            temp.append('{}'.format(i[6]))#Коментарии
+
+        data = {'№ Задачи': None,
+                'Название задачи': None,
+                'Выполение': None,
+                'Исполнитель': None,
+                'Коментарии': None
+                }
+
+        no_task = []
+        name_task = []
+        complete = []
+        worker = []
+        comment = []
+
+        for a in response_data:
+            no_task.append(a[0])
+            name_task.append(a[1])
+            complete.append(a[2])
+            worker.append(a[3])
+            comment.append(a[4])
+
+        data.update({})
+
+        df = pd.DataFrame(data)
