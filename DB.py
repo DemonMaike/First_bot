@@ -2,8 +2,6 @@ import sqlite3
 import secret
 import pandas as pd
 
-
-
 # Показывает текущие задачи, надо сделать разветвление по user_id, чтобы в зависимости от id каждый видел свои задачи,
 # наверное проще решить это посредством корректировки структуры самой БД.
 def read_task(idu):
@@ -75,8 +73,6 @@ def read_task(idu):
 
             response_data.append(' '.join(temp))
             text = ' \n'.join(response_data)
-    else:
-        text = 'Роль не определена'
 
     return text
 
@@ -290,7 +286,7 @@ def reget_task(msg):
     cur.execute("""UPDATE Task SET id_worker = {} WHERE No_task = {}  """.format(id_reget_user[0][0], info[0]))
     conn.commit()
 
-# Удаляет задачу, но не удаляет коментарий!!!                                                                   !!!
+# Удаляет задачу
 def del_task(no_task):
     conn = sqlite3.connect('FGMG.db')
     cur = conn.cursor()
@@ -311,12 +307,13 @@ def excel_commit(idu):
         for i in result:
             temp = []
             temp.append( '{}'.format(i[0])) #Номер задачи
-            temp.append('{}'.format(i[1]))#Назавание задачи
-            temp.append('{}'.format(i[2]))#Выполнение
+            temp.append('{}'.format(i[1])) #Назавание задачи
+            temp.append('{}'.format(i[2])) #Выполнение
             idd = [x for x in cur.execute("""SELECT id_worker FROM Task WHERE No_task = {}""".format(i[0]))][0][0]
             name = [x for x in cur.execute("""SELECT User_Name FROM Users WHERE Id_Users = {}""".format(idd))][0][0]
-            temp.append('{}'.format(name))#Исполнитель
-            temp.append('{}'.format(i[6]))#Коментарии
+            temp.append('{}'.format(name)) #Исполнитель
+            temp.append('{}'.format(i[6])) #Коментарии
+            response_data.append(temp)
 
         data = {'№ Задачи': None,
                 'Название задачи': None,
@@ -338,6 +335,100 @@ def excel_commit(idu):
             worker.append(a[3])
             comment.append(a[4])
 
-        data.update({})
-
+        data.update({'№ Задачи': no_task,
+                    'Название задачи': name_task,
+                    'Выполение': complete,
+                    'Исполнитель': worker,
+                    'Коментарии': comment
+                     })
         df = pd.DataFrame(data)
+        df.to_excel('./task.xlsx', index=False)
+
+    elif role == 'Ведущий':
+        result = [x for x in cur.execute('SELECT * FROM Task t JOIN Comments c '
+                                         'WHERE t.No_Comments = c.No_Comments AND id_worker = {} '.format(idu))]
+        response_data = []
+        for i in result:
+            temp = []
+            temp.append('Номер задачи: {}\n'.format(i[0]))
+            temp.append('Назавание задачи: {}\n'.format(i[1]))
+            temp.append('Выполнение: {}\n'.format(i[2]))
+            idd = [x for x in cur.execute("""SELECT id_worker FROM Task WHERE No_task = {}""".format(i[0]))][0][0]
+            name = [x for x in cur.execute("""SELECT User_Name FROM Users WHERE Id_Users = {}""".format(idd))][0][0]
+            temp.append('Исполнитель: {}\n'.format(name))
+            temp.append('Коментарии: {}\n\n'.format(i[6]))
+            response_data.append(temp)
+
+        data = {'№ Задачи': None,
+                'Название задачи': None,
+                'Выполение': None,
+                'Исполнитель': None,
+                'Коментарии': None
+                }
+
+        no_task = []
+        name_task = []
+        complete = []
+        worker = []
+        comment = []
+
+        for a in response_data:
+            no_task.append(a[0])
+            name_task.append(a[1])
+            complete.append(a[2])
+            worker.append(a[3])
+            comment.append(a[4])
+
+        data.update({'№ Задачи': no_task,
+                     'Название задачи': name_task,
+                     'Выполение': complete,
+                     'Исполнитель': worker,
+                     'Коментарии': comment
+                     })
+        df = pd.DataFrame(data)
+        df.to_excel('./task.xlsx', index=False)
+
+    elif role == 'Инженер':
+        result = [x for x in cur.execute('SELECT * FROM Task t JOIN Comments c ON t.No_Comments = c.No_Comments '
+                                         'WHERE id_worker = {} '.format(idu))]
+        response_data = []
+        for i in result:
+            temp = []
+            temp.append('Номер задачи: {}\n'.format(i[0]))
+            temp.append('Назавание задачи: {}\n'.format(i[1]))
+            temp.append('Выполнение: {}\n'.format(i[2]))
+            idd = [x for x in cur.execute("""SELECT id_worker FROM Task WHERE No_task = {}""".format(i[0]))][0][0]
+            name = [x for x in cur.execute("""SELECT User_Name FROM Users WHERE Id_Users = {}""".format(idd))][0][0]
+            temp.append('Исполнитель: {}\n'.format(name))
+            temp.append('Коментарии: {}\n\n'.format(i[6]))
+
+            response_data.append((temp))
+
+        data = {'№ Задачи': None,
+                'Название задачи': None,
+                'Выполение': None,
+                'Исполнитель': None,
+                'Коментарии': None
+                }
+
+        no_task = []
+        name_task = []
+        complete = []
+        worker = []
+        comment = []
+
+        for a in response_data:
+            no_task.append(a[0])
+            name_task.append(a[1])
+            complete.append(a[2])
+            worker.append(a[3])
+            comment.append(a[4])
+
+        data.update({'№ Задачи': no_task,
+                     'Название задачи': name_task,
+                     'Выполение': complete,
+                     'Исполнитель': worker,
+                     'Коментарии': comment
+                     })
+        df = pd.DataFrame(data)
+        df.to_excel('./task.xlsx', index=False)

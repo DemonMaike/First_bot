@@ -12,8 +12,9 @@ Keyboard_start = telebot.types.ReplyKeyboardMarkup(True, True)
 Keyboard_users = telebot.types.ReplyKeyboardMarkup(True, True)
 Keyborad_retarget = telebot.types.ReplyKeyboardMarkup(True, True)
 button_next = telebot.types.ReplyKeyboardMarkup(True, True)
-Keyboard_boss.row('Cоздать задачу', 'Текущие задачи', 'Завершенные задачи', 'Удалить задачу')
-Keyboard_mid.row('Просмотр задач', 'Переназначение задач', 'Завершение задания')
+Keyboard_boss.row('Cоздать задачу', 'Текущие задачи', 'Завершенные задачи', 'Удалить задачу',
+                  'Сделать Excel отчет')
+Keyboard_mid.row('Просмотр задач', 'Переназначение задач', 'Завершение задания', 'Сделать Excel отчет')
 Keyboard_top.row('Просмотр задач', 'Завершение задания')
 Keyboard_choose.row('Руководитель', 'Ведущий', 'Инженер')
 Keyboard_start.row('Начать')
@@ -96,11 +97,12 @@ def button_read(message):
         msg = bot.send_message(mci, 'Напишите номер задачи, которую вы хотите удалить:'
                                     '\n {}'.format(DB.read_full_no_task()))
         bot.register_next_step_handler(msg, del_task)
-    elif mt == 'Cформировать Excel отчет':
+    elif mt == 'Сделать Excel отчет':
+        f = open("task.xlsx",'rb')
         bot.send_message(mci, 'EXCEL отчёт:')
         DB.excel_commit(idu)
-
-
+        msg = bot.send_document(mci,f)
+        bot.register_next_step_handler(msg, button_read)
     else:
         msg = bot.send_message(mci, 'Вы выбрали не верный вариант, пожалуйста, нажмите на одну из кнопок.')
         bot.register_next_step_handler(msg, button_read)
